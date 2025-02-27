@@ -12,14 +12,6 @@ $vmName = "matebox"
 $vmImage = "Ubuntu2204"
 $vmSize = "Standard_B1s"
 
-Write-Host "Creating a resource group $resourceGroupName ..."
-New-AzResourceGroup -Name $resourceGroupName -Location $location
-
-Write-Host "Creating a network security group $networkSecurityGroupName ..."
-$nsgRuleSSH = New-AzNetworkSecurityRuleConfig -Name SSH  -Protocol Tcp -Direction Inbound -Priority 1001 -SourceAddressPrefix * -SourcePortRange * -DestinationAddressPrefix * -DestinationPortRange 22 -Access Allow;
-$nsgRuleHTTP = New-AzNetworkSecurityRuleConfig -Name HTTP  -Protocol Tcp -Direction Inbound -Priority 1002 -SourceAddressPrefix * -SourcePortRange * -DestinationAddressPrefix * -DestinationPortRange 8080 -Access Allow;
-New-AzNetworkSecurityGroup -Name $networkSecurityGroupName -ResourceGroupName $resourceGroupName -Location $location -SecurityRules $nsgRuleSSH, $nsgRuleHTTP
-
 # Creating a virtual network and subnet
 Write-Host "Creating virtual network $virtualNetworkName with subnet $subnetName ..."
 $vnet = New-AzVirtualNetwork -ResourceGroupName $resourceGroupName -Location $location `
@@ -55,10 +47,9 @@ $nic = New-AzNetworkInterface -ResourceGroupName $resourceGroupName -Location $l
 Write-Host "Creating virtual machine $vmName ..."
 New-AzVm -ResourceGroupName $resourceGroupName -Location $location `
     -Name $vmName -Size $vmSize -Image $vmImage `
-    -PublicIpAddressName $publicIpAddressName `
-    -VirtualNetworkName $virtualNetworkName -SubnetName $subnetName `
-    -SecurityGroupName $networkSecurityGroupName -SshKeyName $sshKeyName `
-    -OpenPorts 22,8080
+    -NetworkInterfaceId $nic.Id `
+    -SshKeyName $sshKeyName
 
 Write-Host "Deployment completed successfully."
+
 
